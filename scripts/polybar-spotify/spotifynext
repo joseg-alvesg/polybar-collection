@@ -1,8 +1,13 @@
 #!/bin/bash
 
-if [ "$(playerctl -p spotify status >> /dev/null 2>&1; echo $?)" == "1" ]
-then
-    echo ""
+# NOTE: check $HOME/polybar-collection/scripts/polybar-spotify/get_spotify_status.sh
+PLAYER="$(playerctl -ls | grep -E 'spotify|spotifyd' | head -n 1 | cut -d '.' -f1)"
+
+if [ "$(
+	playerctl -p $PLAYER status >>/dev/null 2>&1
+	echo $?
+)" == "1" ]; then
+	echo ""
 else
-    echo ""
+	echo ""
 fi
