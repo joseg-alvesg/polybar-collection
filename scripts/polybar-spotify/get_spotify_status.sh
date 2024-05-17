@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # The name of polybar bar which houses the main spotify module and the control modules.
 PARENT_BAR="now-playing"
@@ -21,7 +21,7 @@ EXIT_CODE=$?
 if [ $EXIT_CODE -eq 0 ]; then
 	STATUS=$PLAYERCTL_STATUS
 else
-	STATUS=""
+	STATUS="No player"
 fi
 
 if [ "$1" == "--status" ]; then
@@ -29,13 +29,16 @@ if [ "$1" == "--status" ]; then
 else
 	if [ "$STATUS" = "Stopped" ]; then
 		echo ""
+	elif [ "$STATUS" = "Playing" ]; then
+		update_hooks "$PARENT_BAR_PID" 1
+		playerctl --player=$PLAYER metadata --format "$FORMAT"
 	elif [ "$STATUS" = "Paused" ]; then
 		update_hooks "$PARENT_BAR_PID" 2
 		playerctl --player=$PLAYER metadata --format "$FORMAT"
-	elif [ "$STATUS" = "No player is running" ]; then
-		echo "$STATUS"
+	elif [ "$STATUS" = "No player" ]; then
+		update_hooks "$PARENT_BAR_PID" 3
 	else
-		update_hooks "$PARENT_BAR_PID" 1
-		playerctl --player=$PLAYER metadata --format "$FORMAT"
+		echo "NA"
+		update_hooks "$PARENT_BAR_PID" 2
 	fi
 fi
