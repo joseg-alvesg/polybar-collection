@@ -2,8 +2,8 @@
 
 THEME="murplez"
 
-killall polybar
+killall -q polybar
 while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
-CONFIG_DIR=$(dirname $0)/themes/$THEME/config.ini
+CONFIG_DIR=~/polybar-collection/themes/$THEME/config.ini
 polybar main -c $CONFIG_DIR &
