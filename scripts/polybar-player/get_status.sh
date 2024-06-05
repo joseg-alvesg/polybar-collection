@@ -1,21 +1,23 @@
 #!/usr/bin/env bash
 
+# original code from polybar-spotify
+# https://github.com/PrayagS/polybar-spotify
+
 # The name of polybar bar which houses the main spotify module and the control modules.
 PARENT_BAR="now-playing"
 PARENT_BAR_PID=$(pgrep -a "polybar" | cut -d" " -f1)
 
-PLAYER="$(playerctl -ls | grep -E 'spotify|spotifyd' | head -n 1 | cut -d '.' -f1)"
+PLAYER="$(cat /tmp/selected_player.txt)"
 
 FORMAT="{{ title }} - {{ artist }}"
 
-# TODO: check later
 update_hooks() {
 	while IFS= read -r id; do
-		polybar-msg -p "$id" hook spotify-play-pause $2 1>/dev/null 2>&1
+		polybar-msg -p "$id" hook player-play-pause $2 1>/dev/null 2>&1
 	done < <(echo "$1")
 }
 
-PLAYERCTL_STATUS=$(playerctl --player=$PLAYER -i "chromium" status 2>/dev/null)
+PLAYERCTL_STATUS=$(playerctl --player=$PLAYER status 2>/dev/null)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then

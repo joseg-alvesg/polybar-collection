@@ -1,7 +1,13 @@
 #!/bin/bash
 
 # NOTE: check $HOME/polybar-collection/scripts/polybar-spotify/get_spotify_status.sh
-PLAYER="$(playerctl -ls | grep -E 'spotify|spotifyd' | head -n 1 | cut -d '.' -f1)"
+
+PLAYER="$(cat /tmp/selected_player.txt)"
+
+if [ "$1" == "next" ]; then
+	playerctl -p $PLAYER next
+	exit 1
+fi
 
 if [ "$(
 	playerctl -p $PLAYER status >>/dev/null 2>&1
