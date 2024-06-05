@@ -9,9 +9,9 @@ if [ "$1" == "play-pause" ]; then
 fi
 
 if [ "$(
-	playerctl -p $PLAYER status >>/dev/null 2>&1
+	playerctl -p $PLAYER status >/dev/null 2>&1
 	echo $?
-)" == "1" ]; then
+)" -eq 1 ] || [ "$(playerctl -p $PLAYER metadata 2>&1)" == "No player could handle this command" ]; then
 	echo ""
 	exit 0
 fi

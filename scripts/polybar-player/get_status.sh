@@ -27,6 +27,13 @@ else
 	STATUS="No player"
 fi
 
+PLAYERCTL_METADATA=$(playerctl --player=$PLAYER metadata 2>&1)
+EXIT_CODE1=$?
+
+if [ "$PLAYERCTL_METADATA" == "No player could handle this command" ]; then
+	STATUS=""
+fi
+
 if [ "$1" == "--status" ]; then
 	echo "$STATUS"
 else
@@ -41,7 +48,6 @@ else
 	elif [ "$STATUS" = "No player" ]; then
 		update_hooks "$PARENT_BAR_PID" 3
 	else
-		echo "NA"
-		update_hooks "$PARENT_BAR_PID" 2
+		update_hooks "$PARENT_BAR_PID" 3
 	fi
 fi
