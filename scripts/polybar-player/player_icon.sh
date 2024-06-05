@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-PLAYER=$(cat /tmp/selected_player.txt)
+if [ ! -f /tmp/selected_player.txt ]; then
+	PLAYER="none"
+else
+	PLAYER=$(cat /tmp/selected_player.txt)
+fi
 
 if [ "$PLAYER" == "spotify" ]; then
 	echo " %{T1} %{T-}"

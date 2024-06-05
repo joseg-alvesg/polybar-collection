@@ -7,6 +7,7 @@
 PARENT_BAR="now-playing"
 PARENT_BAR_PID=$(pgrep -a "polybar" | cut -d" " -f1)
 
+if [ ! -f /tmp/selected_player.txt ]; then exit 1; fi
 PLAYER="$(cat /tmp/selected_player.txt)"
 
 FORMAT="{{ title }} - {{ artist }}"

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+if [ ! -f /tmp/selected_player.txt ]; then exit 1; fi
 PLAYER="$(cat /tmp/selected_player.txt)"
 
 if [ "$1" == "prev" ]; then
