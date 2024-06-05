@@ -31,6 +31,5 @@ if [ -n "$selected_player" ]; then
 	echo $selected_player >/tmp/selected_player.txt
 	notify-send "Selected player: $selected_player"
 else
-	notify-send "No player selected."
 	exit 1
 fi
