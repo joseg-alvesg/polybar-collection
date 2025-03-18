@@ -1,53 +1,123 @@
-#!/usr/bin/env bash
-
-# original code from polybar-spotify
-# https://github.com/PrayagS/polybar-spotify
+#!/bin/bash
 
 # The name of polybar bar which houses the main spotify module and the control modules.
-PARENT_BAR="now-playing"
-PARENT_BAR_PID=$(pgrep -a "polybar" | cut -d" " -f1)
+PARENT_BAR="${1:-music}"
+PARENT_BAR_PID=$(pgrep -a "polybar" | grep "$PARENT_BAR" | cut -d" " -f1)
+
+urldecode() {
+	: "${*//+/ }"
+	echo -e "${_//%/\\x}"
+}
+
+send_hook() {
+	[ -z "$1" ] && echo "send_hook: missing arg" && exit 1
+	polybar-msg -p "$PARENT_BAR_PID" hook player-play-pause "$1" 1>/dev/null 2>&1
+}
+
+extract_meta() {
+	grep "$1\W" <<<"$meta" | awk '{$1=$2=""; print $0}' | sed 's/^ *//; s/; */;/g' | paste -s -d/ -
+}
 
 if [ ! -f /tmp/selected_player.txt ]; then exit 1; fi
 PLAYER="$(cat /tmp/selected_player.txt)"
+if [ "$PLAYER" == "none" ]; then
+	echo ""
+	send_hook 3
+	exit 0
+fi
 
-FORMAT="{{ title }} - {{ artist }}"
+# if "icon" given, determine icon. otherwise, print metadata
+get_info() {
+	if [ -z "$1" ]; then
+		echo "Usage: get_info PLAYER [icon, status]"
+		exit 1
+	fi
 
-update_hooks() {
-	while IFS= read -r id; do
-		polybar-msg -p "$id" hook player-play-pause $2 1>/dev/null 2>&1
-	done < <(echo "$1")
+	meta=$(playerctl -p "$PLAYER" metadata 2>/dev/null)
+	if [ -z "$meta" ]; then
+		echo " "
+		send_hook 3
+		return 0
+	fi
+
+	# get title
+	title=$(extract_meta title)
+	# if no title, try url e.g. vlc
+	if [ -z "$title" ]; then
+		title=$(extract_meta url)
+		title=$(urldecode "${title##*/}")
+	fi
+
+	if [ "$2" == "status" ]; then
+		echo $(playerctl -p "$PLAYER" status)
+		return 0
+	fi
+
+	# if not "icon", display information and return
+	if [ "$2" != "icon" ]; then
+		echo -n "$title  "
+		artist=$(extract_meta artist)
+		[ -z "$artist" ] && artist=$(extract_meta albumArtist)
+
+		if [ -n "$artist" ]; then
+
+			echo -n " 󰠃 $artist  "
+
+			album=$(extract_meta album)
+			[ -n "$album" ] && echo " 󰀥 $album "
+
+		fi
+
+		return 0
+	fi
+
+	# determine icon:
+	# if player name is recognised, use it
+	case "$1" in
+	spotify* | vlc | mpv) echo "$1" ;;
+	kdeconnect*) echo "kdeconnect" ;;
+	chromium* | firefox* | brave*)
+		# if a browser, search window titles:
+		# this tries to avoid title messing up the regex
+		regex_title=$(echo "$title" | tr "[:punct:]" ".")
+		windowname=$(xdotool search --name --class --classname "$regex_title" getwindowname)
+		echo "$windowname"
+		case $windowname in
+		"") ;; # ignore if empty
+		*Netflix*) echo "netflix" ;;
+		*YouTube*) echo "youtube" ;;
+		*"Prime Video"*) echo "prime" ;;
+		*"Corridor Digital"*) echo "corridor" ;;
+		*) echo "browser" ;;
+		esac
+		;;
+	*) echo "none" ;;
+	esac
 }
 
-PLAYERCTL_STATUS=$(playerctl --player=$PLAYER status 2>/dev/null)
-EXIT_CODE=$?
+# manually go through players
+read -d'\n' -ra PLAYERS <<<"$(playerctl -l 2>/dev/null)"
+declare -a PAUSED
+for player in "${PLAYERS[@]}"; do
+	[ "$player" = "playerctld" ] && continue
 
-if [ $EXIT_CODE -eq 0 ]; then
-	STATUS=$PLAYERCTL_STATUS
-else
-	STATUS="No player"
-fi
+	p_status=$(playerctl -p "$player" status 2>/dev/null)
 
-PLAYERCTL_METADATA=$(playerctl --player=$PLAYER metadata 2>&1)
-EXIT_CODE1=$?
-
-if [ "$PLAYERCTL_METADATA" == "No player could handle this command" ]; then
-	STATUS=""
-fi
-
-if [ "$1" == "--status" ]; then
-	echo "$STATUS"
-else
-	if [ "$STATUS" = "Stopped" ]; then
-		echo ""
-	elif [ "$STATUS" = "Playing" ]; then
-		update_hooks "$PARENT_BAR_PID" 1
-		playerctl --player=$PLAYER metadata --format "$FORMAT"
-	elif [ "$STATUS" = "Paused" ]; then
-		update_hooks "$PARENT_BAR_PID" 2
-		playerctl --player=$PLAYER metadata --format "$FORMAT"
-	elif [ "$STATUS" = "No player" ]; then
-		update_hooks "$PARENT_BAR_PID" 3
-	else
-		update_hooks "$PARENT_BAR_PID" 3
+	# if we have one playing, we'll use it and EXIT
+	if [ "$p_status" = "Playing" ]; then
+		send_hook 1
+		get_info "$player" "$2"
+		exit 0
 	fi
+
+	[ "$p_status" = "Paused" ] && PAUSED+=("$player")
+done
+
+# if we have a paused, show it otherwise assume there are no players or have all stopped
+if [ -n "${PAUSED[0]}" ]; then
+	send_hook 2
+	get_info "${PAUSED[0]}" "$2"
+else
+	[ "$2" = icon ] && echo "none" || echo " "
+	send_hook 3
 fi

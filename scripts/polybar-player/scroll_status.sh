@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# see man zscroll for documentation of the following parameters
-echo "212"
-zscroll -l 30 \
-	--delay 0.1 \
-	--match-command "$(dirname $0)/get_status.sh --status" \
-	--match-text "Playing" "--scroll 1" \
-	--match-text "Paused" "--scroll 0" \
-	--update-check true "$(dirname $0)/get_status.sh" &
+cmd="${0%/*}/get_status.sh $1"
 
-sleep 3
+zscroll -l 30 \
+	--scroll-padding "$(printf ' %.0s' {1..8})" \
+	-d 0.3 \
+	-M "$cmd status" \
+	-m "Playing" "--scroll 1" \
+	-m "Paused" "--scroll 0" \
+	-U 10 -u t "$cmd" &
+
 wait

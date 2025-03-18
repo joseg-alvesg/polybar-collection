@@ -2,23 +2,19 @@
 if [ ! -f /tmp/selected_player.txt ]; then
 	PLAYER="none"
 else
-	PLAYER=$(cat /tmp/selected_player.txt)
+	CMD=$(exec $(dirname "$0")/get_status.sh main icon)
 fi
 
-if [ "$PLAYER" == "spotify" ]; then
-	echo " %{T1} %{T-}"
-elif [ "$PLAYER" == "chromium" ]; then
-	echo "%{T1} %{T-}"
-elif [ "$PLAYER" == "firefox" ]; then
-	echo "%{T1} %{T-}"
-elif [ "$PLAYER" == "vlc" ]; then
-	echo "echo %{T1} %{T-}"
-elif [ "$PLAYER" == "none" ]; then
-	if [ -n "$(playerctl -ls | cut -d '.' -f1)" ]; then
-		echo "%{T1}󰝚 %{T-}"
-	else
-		echo ""
-	fi
-else
-	echo ""
-fi
+# echo "222 $CMD 222"
+
+case "$CMD" in
+spotify*) echo " %{T1} %{T-}" ;;
+*VLC*) echo "%{T1}󰕼 %{T-}" ;;
+mpv*) echo "%{T1} %{T-}" ;;
+*Netflix*) echo "%{T1}ﱄ %{T-}" ;;
+*YouTube*) echo "%{T1} %{T-}" ;;
+*"Prime Video"*) echo "%{T1} %{T-}" ;;
+chromium*) echo "%{T1} %{T-}" ;;
+firefox*) echo "%{T1} %{T-}" ;;
+*) echo "%{T1} %{T-}" ;;
+esac

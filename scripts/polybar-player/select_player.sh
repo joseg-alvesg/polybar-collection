@@ -2,7 +2,7 @@
 
 # NOTE: set a sxhkd keybinding to run this script is recommended
 
-players=$(playerctl -ls | cut -d '.' -f1)
+players=$(playerctl -ls)
 
 if [ -z "$players" ]; then
 	notify-send "No active players found."
