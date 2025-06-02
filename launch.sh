@@ -6,4 +6,5 @@ killall -q polybar
 while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
 CONFIG_DIR=~/polybar-collection/themes/$THEME/config.ini
-polybar main -c $CONFIG_DIR &
+polybar -r main -c $CONFIG_DIR &
+polybar -r second -c $CONFIG_DIR &
